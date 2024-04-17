@@ -1,7 +1,8 @@
+# Case Study 1: River City AI
 
 <details>
 
-<summary>Overview</summary>
+<summary><strong>Overview</strong></summary>
 
 Test Overview.
 
@@ -9,7 +10,7 @@ Test Overview.
 
 <details>
 
-<summary>Existing Environment</summary>
+<summary><strong>Existing Environment</strong></summary>
 
 <details>
 <summary>Environment sub-section 1</summary>
@@ -24,5 +25,13 @@ Environment sub section 1 details.
 Environment sub section 2 details.
 
 </details>
+
+</details>
+
+<details>
+
+<summary><strong>Requirements</strong></summary>
+
+Test Requirements
 
 </details>
