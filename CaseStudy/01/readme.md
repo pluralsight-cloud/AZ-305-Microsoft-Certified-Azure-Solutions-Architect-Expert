@@ -84,6 +84,7 @@ River City AI is already using Amazon Web Services and due to the success and ca
 * The application development team wants to have full control over the management of their resources, including configuring Azure Role-based access control (RBAC)
 * The application development team must not be able configure or override Azure Policy
 * Application testing requires the use of new services and new configurations that are not permitted in production environments
+* The test environment will consist of multiple resources in multiple resource groups
 
 </details>
 

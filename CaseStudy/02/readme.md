@@ -112,15 +112,6 @@ Barrier Reef Audio planning to migrate to Azure. They have a hybrid cloud strate
 </details>
 
 <details>
-<summary>Test Environment</summary>
-
-* The application development team wants to have full control over the management of their resources
-* Application testing requires the use of new services and new configurations that are not permitted in production environments
-* The test environment will consist of multiple resources in multiple resource groups
-
-</details>
-
-<details>
 <summary>Recording Devices</summary>
 
 * Each recorder has up to 4 microphones connected
