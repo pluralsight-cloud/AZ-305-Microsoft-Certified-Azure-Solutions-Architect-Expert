@@ -1,5 +1,6 @@
-# AZ-305-Microsoft-Certified-Azure-Solutions-Architect-Expert
-Microsoft Certified: Azure Solutions Architect Expert
+# AZ-305: Microsoft Certified: Azure Solutions Architect Expert
+
+Additional learning resources for Microsoft Certified: Azure Solutions Architect Expert.
 
 ## [Case Studies](./CaseStudy/readme.md)
 
