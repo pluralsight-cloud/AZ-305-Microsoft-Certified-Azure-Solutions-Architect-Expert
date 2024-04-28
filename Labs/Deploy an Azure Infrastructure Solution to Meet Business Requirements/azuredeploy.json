@@ -1,0 +1,228 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.26.170.59819",
+      "templateHash": "15629895211534033941"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "uniqueString": "[toLower(substring(replace(resourceGroup().name, '-', ''), 0, 5))]",
+    "aspName": "[format('asp-imageresizer{0}', variables('uniqueString'))]",
+    "webAppName": "[format('app-imageresizer{0}', variables('uniqueString'))]",
+    "storageAccountName": "[format('stimageresize{0}', variables('uniqueString'))]",
+    "azureFunctionName": "[format('func-{0}', variables('uniqueString'))]",
+    "eventGridTopicName": "[format('evgt-{0}', variables('uniqueString'))]",
+    "eventGridSubscriptionName": "[format('egst-{0}', variables('uniqueString'))]",
+    "gitRepoUrl": "https://github.com/WayneHoggett-ACG/function-image-upload-resize",
+    "functionGitRepoUrl": "https://github.com/WayneHoggett-ACG/storage-blob-upload-from-webapp"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-12-01",
+      "name": "[variables('aspName')]",
+      "location": "[variables('location')]",
+      "sku": {
+        "name": "B1",
+        "capacity": 1
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[variables('webAppName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]",
+        "httpsOnly": false,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureStorageConfig__AccountName",
+              "value": "[variables('storageAccountName')]"
+            },
+            {
+              "name": "AzureStorageConfig__AccountKey",
+              "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-02-01').keys[0].value]"
+            },
+            {
+              "name": "AzureStorageConfig__ImageContainer",
+              "value": "images"
+            },
+            {
+              "name": "AzureStorageConfig__ThumbnailContainer",
+              "value": "thumbnails"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/sourcecontrols",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', variables('webAppName'), 'web')]",
+      "properties": {
+        "repoUrl": "[variables('gitRepoUrl')]",
+        "branch": "master",
+        "isManualIntegration": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[variables('location')]",
+      "kind": "StorageV2",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "supportsHttpsTrafficOnly": false,
+        "allowBlobPublicAccess": true
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}', variables('storageAccountName'), 'default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', 'images')]",
+      "properties": {
+        "publicAccess": "Container"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}/{1}/{2}', variables('storageAccountName'), 'default', 'thumbnails')]",
+      "properties": {
+        "publicAccess": "Container"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2020-12-01",
+      "name": "[variables('azureFunctionName')]",
+      "location": "[variables('location')]",
+      "kind": "functionapp",
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1}', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2021-02-01').keys[0].value)]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~2"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "THUMBNAIL_CONTAINER_NAME",
+              "value": "thumbnails"
+            },
+            {
+              "name": "THUMBNAIL_WIDTH",
+              "value": "100"
+            },
+            {
+              "name": "datatype",
+              "value": "binary"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/sourcecontrols",
+      "apiVersion": "2021-01-01",
+      "name": "[format('{0}/{1}', variables('azureFunctionName'), 'web')]",
+      "properties": {
+        "repoUrl": "[variables('functionGitRepoUrl')]",
+        "branch": "master",
+        "isManualIntegration": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('azureFunctionName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics",
+      "apiVersion": "2023-12-15-preview",
+      "name": "[variables('eventGridTopicName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "source": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "topicType": "Microsoft.Storage.StorageAccounts"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites/sourcecontrols', variables('azureFunctionName'), 'web')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+      "apiVersion": "2023-12-15-preview",
+      "name": "[format('{0}/{1}', variables('eventGridTopicName'), variables('eventGridSubscriptionName'))]",
+      "properties": {
+        "destination": {
+          "endpointType": "AzureFunction",
+          "properties": {
+            "resourceId": "[format('{0}/functions/Thumbnail', resourceId('Microsoft.Web/sites', variables('azureFunctionName')))]",
+            "maxEventsPerBatch": 1,
+            "preferredBatchSizeInKilobytes": 64
+          }
+        },
+        "filter": {
+          "subjectBeginsWith": "/blobservices/default/containers/images/",
+          "includedEventTypes": [
+            "Microsoft.Storage.BlobCreated"
+          ]
+        },
+        "labels": [
+          "functions-Thumbnail"
+        ],
+        "eventDeliverySchema": "EventGridSchema",
+        "retryPolicy": {
+          "maxDeliveryAttempts": 30,
+          "eventTimeToLiveInMinutes": 1440
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('azureFunctionName'))]",
+        "[resourceId('Microsoft.EventGrid/systemTopics', variables('eventGridTopicName'))]"
+      ]
+    }
+  ]
+}
