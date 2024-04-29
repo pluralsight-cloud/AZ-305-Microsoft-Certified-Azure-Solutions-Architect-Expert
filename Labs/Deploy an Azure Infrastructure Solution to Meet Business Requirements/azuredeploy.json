@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.26.170.59819",
-      "templateHash": "8942178489403424015"
+      "templateHash": "10131113159799634723"
     }
   },
   "variables": {
@@ -130,6 +130,7 @@
       "kind": "functionapp",
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('aspName'))]",
+        "httpsOnly": false,
         "siteConfig": {
           "appSettings": [
             {
