@@ -6,8 +6,8 @@ var storageAccountName = 'stimageresize${uniqueString}'
 var azureFunctionName = 'func-${uniqueString}'
 var eventGridTopicName = 'evgt-${uniqueString}'
 var eventGridSubscriptionName = 'egst-${uniqueString}'
-var gitRepoUrl = 'https://github.com/WayneHoggett-ACG/function-image-upload-resize'
-var functionGitRepoUrl = 'https://github.com/WayneHoggett-ACG/storage-blob-upload-from-webapp'
+var gitRepoUrl = 'https://github.com/WayneHoggett-ACG/storage-blob-upload-from-webapp'
+var functionGitRepoUrl = 'https://github.com/WayneHoggett-ACG/function-image-upload-resize'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2020-12-01' = {
   name: aspName
@@ -97,6 +97,7 @@ resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
   kind: 'functionapp'
   properties: {
     serverFarmId: appServicePlan.id
+    httpsOnly: false
     siteConfig: {
       appSettings: [
         {
@@ -128,7 +129,7 @@ resource azureFunction 'Microsoft.Web/sites@2020-12-01' = {
   }
 }
 
-resource funtionappgitsource 'Microsoft.Web/sites/sourcecontrols@2021-01-01' = {
+resource functionappgitsource 'Microsoft.Web/sites/sourcecontrols@2021-01-01' = {
   parent: azureFunction
   name: 'web'
   properties: {
@@ -142,7 +143,8 @@ resource eventgridsystemtopic 'Microsoft.EventGrid/systemTopics@2023-12-15-previ
   name: eventGridTopicName
   location: location
   dependsOn: [
-    funtionappgitsource // requires the function to be deployed
+    azureFunction
+    functionappgitsource
   ]
   properties: {
     source: storageaccount.id
@@ -153,6 +155,9 @@ resource eventgridsystemtopic 'Microsoft.EventGrid/systemTopics@2023-12-15-previ
 resource eventsubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2023-12-15-preview' = {
   name: eventGridSubscriptionName
   parent: eventgridsystemtopic
+  dependsOn: [
+    functionappgitsource 
+  ]
   properties: {
     destination: {
       endpointType: 'AzureFunction'

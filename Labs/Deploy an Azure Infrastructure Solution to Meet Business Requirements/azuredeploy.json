@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.26.170.59819",
-      "templateHash": "15629895211534033941"
+      "templateHash": "8942178489403424015"
     }
   },
   "variables": {
@@ -17,8 +17,8 @@
     "azureFunctionName": "[format('func-{0}', variables('uniqueString'))]",
     "eventGridTopicName": "[format('evgt-{0}', variables('uniqueString'))]",
     "eventGridSubscriptionName": "[format('egst-{0}', variables('uniqueString'))]",
-    "gitRepoUrl": "https://github.com/WayneHoggett-ACG/function-image-upload-resize",
-    "functionGitRepoUrl": "https://github.com/WayneHoggett-ACG/storage-blob-upload-from-webapp"
+    "gitRepoUrl": "https://github.com/WayneHoggett-ACG/storage-blob-upload-from-webapp",
+    "functionGitRepoUrl": "https://github.com/WayneHoggett-ACG/function-image-upload-resize"
   },
   "resources": [
     {
@@ -187,6 +187,7 @@
         "topicType": "Microsoft.Storage.StorageAccounts"
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('azureFunctionName'))]",
         "[resourceId('Microsoft.Web/sites/sourcecontrols', variables('azureFunctionName'), 'web')]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ]
@@ -221,7 +222,8 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('azureFunctionName'))]",
-        "[resourceId('Microsoft.EventGrid/systemTopics', variables('eventGridTopicName'))]"
+        "[resourceId('Microsoft.EventGrid/systemTopics', variables('eventGridTopicName'))]",
+        "[resourceId('Microsoft.Web/sites/sourcecontrols', variables('azureFunctionName'), 'web')]"
       ]
     }
   ]
